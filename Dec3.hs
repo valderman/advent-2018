@@ -2,8 +2,7 @@
 module Dec3 (solve, taskA, taskB) where
 import Common
 import Data.Function (on)
-import Data.List ((\\), sort, group, sortBy, groupBy)
-import Data.Maybe (fromJust)
+import Data.List ((\\), sortBy, groupBy)
 
 data Claim = Claim
   { claimId :: Int
@@ -16,7 +15,7 @@ data ClaimedSquare = Square
   , sqCoords :: (Int, Int)
   } deriving Show
 
-claim :: Parser Claim
+claim :: Parser Char Claim
 claim =
   Claim <$> (thisChar '#' *> int <* string " @ ")
         <*> (pair "," int int <* string ": ")
@@ -33,7 +32,7 @@ allClaims :: Claim -> [ClaimedSquare]
 allClaims (Claim {..}) = map (Square claimId) $ allCoords claimTopLeft claimSize
 
 parseClaims :: String -> [ClaimedSquare]
-parseClaims = concat . map (allClaims . fromJust . parse claim) . lines
+parseClaims = concat . map (allClaims . parse_ claim) . lines
 
 overlapGroups :: [ClaimedSquare] -> [[ClaimedSquare]]
 overlapGroups = groupBy ((==) `on` sqCoords) . sortBy (compare `on` sqCoords)
@@ -49,6 +48,6 @@ taskB inp = head $ singles groups \\ shareds groups
   where
     groups = parseOverlapGroups inp
     -- IDs that have a monopoly on some square
-    singles = map head . group . sort . map sqId . concat . filter ((==1) . length)
+    singles = map head . soup . map sqId . concat . filter ((==1) . length)
     -- IDs that share at least one square
-    shareds = map head . group . sort . map sqId . concat . filter ((>1) . length)
+    shareds = map head . soup . map sqId . concat . filter ((>1) . length)
